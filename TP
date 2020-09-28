@@ -1,0 +1,13 @@
+#Function that draw the domino
+
+def drawDomino(a, i):
+    print("+-----|-----+")
+    l1=[["  " , "  " , " "] ,["  " , "  " ,"  "] ,[" " ,"  " ,"  "]]
+    l2 = [["  ", "  ", " "], ["  ", "  ", "  "], [" ", "  ", "  "]]
+    if(a[0]%2==1):
+        l[1][1]="*"
+    for i in range(3):
+        print("|" + l[i][0] + l[i][1]  + l[i][2] + "|" + )
+    print("+-----|-----+")
+
+drawDomino((3,4),2)
