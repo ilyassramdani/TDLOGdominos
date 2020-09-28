@@ -33,3 +33,23 @@ def draw_dominoes (l) :
 
 draw_dominoe((2,3),1)
 draw_dominoes ([(1,6),(4,5)])
+
+
+def init_pile ():
+    #random de 28 domino
+
+def pull (pile, hand) :
+    #tirer pour en avoir 7 si possible et les supprimer de la pile
+
+def pull_out (hand) :
+    #if somme = 12
+    x = input()
+    #supprimmer les éléments demandés de la main
+
+pile = init_pile()
+hand = []
+pull(pile,hand)
+while pile != [] and hand != [] :
+    #étape 2 et 3
+if hand === [] :
+    print ("WIN !")
