@@ -1,13 +1,26 @@
 #Function that draw the domino
-
+def fill_list(k) :
+    l = [["  ", "  ","  "],["  ","  ","  "],["  ","  ","  "]]
+    if k%2 != 0 :
+        l[1][1] = "*"
+    if k>1 :
+        l[0][0] = "*"
+        l[2][2] = "*"
+    if k>3 : 
+        l[0][2] = "*"
+        l[2][0] = "*"
+    if k==6 :
+        l[0][1] = "*"
+        l[2][1] = "*"
+    return l
+    
 def drawDomino(a, i):
     print("+-----|-----+")
-    l1=[["  " , "  " , " "] ,["  " , "  " ,"  "] ,[" " ,"  " ,"  "]]
-    l2 = [["  ", "  ", " "], ["  ", "  ", "  "], [" ", "  ", "  "]]
-    if(a[0]%2==1):
-        l[1][1]="*"
+    lx = fill_list(a[0])
+    ly = fill_list(a[1])
+
     for i in range(3):
-        print("|" + l[i][0] + l[i][1]  + l[i][2] + "|" + )
+        print(" \t |" + lx[i][0] + lx[i][1]  + lx[i][2] + "|" )
     print("+-----|-----+")
 
 drawDomino((3,4),2)
