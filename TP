@@ -1,9 +1,12 @@
+# Ilyass RAMDANI
+# Pauline MOLITOR
+# Time spent - 
+
 from random import randint
 
-# Le programme fonctionne bien, je te laisse commenter les espaces chelous de fill_list et je pense qu'on sera bons! :) 
-
 def fill_list(k):
-    l = [["  ", " ", "  "], ["  ", " ", "  "], ["  ", " ", "  "]]
+    """returns a list of list, of size (3,3), representing the string needed to print half a domino of value k, line by line and column by column"""
+    l = [["  ", " ", "  "], ["  ", " ", "  "], ["  ", " ", "  "]] # spaces are used between each columns so that two * can not be stuck together
     if k % 2 != 0:
         l[1][1] = "*"
     if k > 1:
@@ -18,7 +21,8 @@ def fill_list(k):
     return l
 
 
-def draw_dominoe(a, i):
+def draw_domino(a, i):
+    """prints strings representing the domino a, which is a tuple, with its index i"""
     print(" \t +-----|-----+")
     lx = fill_list(a[0])
     ly = fill_list(a[1])
@@ -26,7 +30,7 @@ def draw_dominoe(a, i):
     for j in range(3):
         line = lx[j][0] + lx[j][1] + lx[j][2] + "|" + ly[j][0] + ly[j][1] + ly[j][2] + "|"
         if j == 1:
-            print("(" + str(i) + ")" + "  |" + line)
+            print("(" + str(i) + ")" + " \t |" + line)
         else:
             print(" \t |" + line)
 
@@ -34,15 +38,17 @@ def draw_dominoe(a, i):
 
 
 def draw_dominoes(l):
+    """prints a list of dominoes"""
     for (i, d) in enumerate(l):
-        draw_dominoe(d, i + 1)
+        draw_domino(d, i + 1)
 
 
-draw_dominoe((2, 3), 1)  # test with a tuple
+draw_domino((2, 3), 1)  # test with a tuple
 draw_dominoes([(1, 6), (4, 5)])  # test with a list of tuples
 
 
 def init_pile():
+    """initialises the pile with a set of 28 random dominoes"""
     l = []
     for i in range(28):
         l += [(randint(0, 6), randint(0, 6))]
@@ -50,43 +56,57 @@ def init_pile():
 
 
 def push(pile, hand):
+    """takes as many dominoes as necessary from the draw pile so that the player has a hand of 7 dominoes"""
     for i in range(7 - len(hand)):
-        hand += [(pile.pop())]
+        try:
+            hand += [(pile.pop())]
+        except IndexError as e: 
+            print("The draw pile is empty.")
+            break 
     return
 
 
 
 
 def pull_out(hand) :
-    #take a string as input and change the hand if the sum of dominoes is equal to 12
+    """asks the player to enter a string representing the dominoes he wants to remove, the hand is modified if the sum of dominoes is equal to 12;
+       returns 1 if there is no more possible combination of dominoes which sum is equal to 12"""
 
     res=0
-    s=input("Which are the dominoes that sum 12?")
+    s=input("Which are the dominoes that sum 12? (if you don't have any valid combination enter 'q') ")
     s=sorted(s)     #to pop the elements in the right order
 
-    for i in s:
-        res += hand[int(i)-1][0]
-        res += hand[int(i) - 1][1]
-    if (res==12):
-        for i in reversed(s):   #reversed because if we pop the 3rd element, we will only pop the 4th element and the 5th (nonsense)
-            hand.pop(int(i)-1)
-    else:
-        print("Unfortunately, you're wrong..")
+    if s[0]=="q" :
+        return 1
+
+    else :
+        for i in s:
+            res += hand[int(i)-1][0]
+            res += hand[int(i) - 1][1]
+        if (res==12):
+            for i in reversed(s):   #reversed because if we pop the 3rd element, we will only pop the 4th element and the 5th (nonsense)
+                hand.pop(int(i)-1)
+        else:
+            print("Unfortunately, you're wrong..")
+        return 0
 
 
 hand = []
 pile = init_pile()
-push(pile, hand)
 
 
-
-
-while pile != [] and hand != [] :
+while not(len(pile)==0 and len(hand)==0) :
+    push(pile, hand)
     draw_dominoes(hand)
     if (len(pile)==0):
-        print("WIIIIN")
-        break
+        print("There is no more domino in the pile.")
     else:
-        print("il reste " + str(len(pile)) + " dominos dans la pioche!")
-    pull_out(hand)
-    push(pile, hand)
+        print("There is still " + str(len(pile)) + " dominoes in the pile!")
+    lost = pull_out(hand)
+    if lost==1 :
+        break
+
+if len(pile)==0 and len(hand)==0 :
+    print ("WIIIN")
+else :
+    print ("You've lost")
