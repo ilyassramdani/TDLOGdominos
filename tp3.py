@@ -19,8 +19,8 @@ class Domino:
     _HORIZONTAL_BAR = "+-----|-----+"
 
     def __init__(self, left, right):
-        assert (left >= 0 and left < 7), "Value of the domino's left-side must be in [0,6]"
-        assert (right >= 0 and right < 7), "Value of the domino's right-side must be in [0,6]"
+        assert (0 <= left < 7), "Value of the domino's left-side must be in [0,6]"
+        assert (0 <= right < 7), "Value of the domino's right-side must be in [0,6]"
         self._left = left
         self._right = right
 
@@ -69,7 +69,7 @@ class InvalidIndexError(Exception):
     def value(self):
         return self._value
     def __str__(self):
-        return f"Negative value '{self._value}'"
+        return f"Invalid index '{self._value}'"
 
 
 
@@ -133,10 +133,16 @@ class Solitaire:
             self._display_domino(index + 1, domino)
             print()
 
-    def check_index(self, index):
-        if not (index > 0 and index < len(self.hand)):
-            raise InvalidIndexError("Index must be between 1 and len(hand)")
+    def check_indexes(self, indexes):
+        total = 0
+        for i in indexes:
+            if (0 <= i < len(self.hand)):
+                total += self.hand[i].score
+            else :
+                raise InvalidIndexError("Index must be between 1 and the size of the hand")
 
+        if total != self.target:
+            raise InvalidIndexError(f"invalid total ({total} but expected {self.target})")
 
     def _get_player_input(self):
         """Returns the indexes of dominos to discard entered by the player"""
@@ -144,11 +150,12 @@ class Solitaire:
 
         # substract 1 because indexes are displayed as starting at 1
         try:
-            res = [int(i) - 1 for i in indexes]
-            for index in res:
-                self.check_index(index)
+            indexes = [int(i) - 1 for i in indexes]
+            self.check_indexes(indexes)
         except ValueError :
             raise InvalidIndexError("Index must be integer")
+        else:
+            return indexes
 
     @property
     def hand(self):
@@ -190,12 +197,9 @@ class Solitaire:
         # ask the player to choose the dominos to discard
         try:
             indexes = self._get_player_input()
-            total = sum([self.hand[i].score for i in indexes])
-        except InvalidIndexError as e :
-            print(e)
-            self.turn()
-
-        if total == self.target:
+        except InvalidIndexError as error :
+            print(error)
+        else:
             # discard the played dominos
             for i in sorted(indexes, reverse=True):
                 self.hand.pop(i)
@@ -203,8 +207,6 @@ class Solitaire:
             # fill the hand with dominos in the pile
             while len(self.hand) != 7 and self.pile:
                 self.hand.append(self.pile.pop())
-        else:
-            print(f"invalid total ({total} but expected {self.target})")
 
     def play(self):
         """Play the game turn by turn until victory or defeat
