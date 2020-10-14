@@ -1,6 +1,30 @@
-"""TDLOG TP3 - Pauline MOLITOR, Ilyass RAMDANI - ? brain hours"""
+#!/usr/bin/env python
+"""TDLOG TP2 - Mathieu Bernard"""
+
 import itertools
 import random
+
+
+class Error_target(Exception):
+    """Exception raised when the sum of dominoes is different from the target"""
+
+    def __init__(self, n):
+        super().__init__()
+        self._value = n
+
+    @property
+    def value(self):
+        return self._value
+
+    def __str__(self):
+        return f"La somme n'est pas egale a 12 mais a '{self._value}'"
+
+
+class Zero_error(Exception):
+    """Exception raised when the player enter 0 as input"""
+
+    def __str__(self):
+        return "You entered a zero! Indexes are superior to 1. Retry!"
 
 
 class Domino:
@@ -19,8 +43,8 @@ class Domino:
     _HORIZONTAL_BAR = "+-----|-----+"
 
     def __init__(self, left, right):
-        assert (0 <= left < 7), "Value of the domino's left-side must be in [0,6]"
-        assert (0 <= right < 7), "Value of the domino's right-side must be in [0,6]"
+        assert (left >= 0 and left < 7), "Dominoe value should be in [0,6]"
+        assert (right >= 0 and right < 7), "Dominoe value should be in [0,6]"
         self._left = left
         self._right = right
 
@@ -59,20 +83,6 @@ class Domino:
 
     def __ne__(self, other):
         return not self == other
-
-
-class InvalidIndexError(Exception):
-    def __init__(self,n):
-        super().__init__()
-        self._value = n
-    @property
-    def value(self):
-        return self._value
-    def __str__(self):
-        return f"Invalid index '{self._value}'"
-
-
-
 
 
 class Solitaire:
@@ -133,30 +143,6 @@ class Solitaire:
             self._display_domino(index + 1, domino)
             print()
 
-    def check_indexes(self, indexes):
-        total = 0
-        for i in indexes:
-            if (0 <= i < len(self.hand)):
-                total += self.hand[i].score
-            else :
-                raise InvalidIndexError("Index must be between 1 and the size of the hand")
-
-        if total != self.target:
-            raise InvalidIndexError(f"invalid total ({total} but expected {self.target})")
-
-    def _get_player_input(self):
-        """Returns the indexes of dominos to discard entered by the player"""
-        indexes = input(f"(pile size: {len(self.pile)}), indexes to pull out?")
-
-        # substract 1 because indexes are displayed as starting at 1
-        try:
-            indexes = [int(i) - 1 for i in indexes]
-            self.check_indexes(indexes)
-        except ValueError :
-            raise InvalidIndexError("Index must be integer")
-        else:
-            return indexes
-
     @property
     def hand(self):
         """The hand of 7 (maximum) dominos to play with"""
@@ -180,6 +166,10 @@ class Solitaire:
         """Returns True if and only of the game is lost"""
         return not self._exists_legal_move()
 
+
+class InteractiveSolitaire(Solitaire):
+    """Solitaire's daughter class which inherits its methods and adds the interactive part."""
+
     def turn(self):
         """Manage a single turn of the game
 
@@ -195,11 +185,20 @@ class Solitaire:
         self._display_hand()
 
         # ask the player to choose the dominos to discard
-        try:
-            indexes = self._get_player_input()
-        except InvalidIndexError as error :
-            print(error)
-        else:
+        while True:
+            try:
+                indexes = self._get_player_input()
+                total = sum([self.hand[i].score for i in indexes])
+                if total != self._target:
+                    raise Error_target(total)
+                break
+            except IndexError:
+                print(
+                    f'Please enter a sequence with numbers in [1,{len(self.hand)}]')
+            except Error_target:
+                print(Error_target(total))
+
+        if total == self.target:
             # discard the played dominos
             for i in sorted(indexes, reverse=True):
                 self.hand.pop(i)
@@ -207,6 +206,27 @@ class Solitaire:
             # fill the hand with dominos in the pile
             while len(self.hand) != 7 and self.pile:
                 self.hand.append(self.pile.pop())
+        else:
+            print(f"invalid total ({total} but expected {self.target})")
+
+    def _get_player_input(self):
+        """Returns the indexes of dominos to discard entered by the player"""
+        indexes = input(f"(pile size: {len(self.pile)}), indexes to pull out?")
+        try:
+            for i in indexes:               # verify that the indexes entered by the player are >0
+                if int(i) == 0:
+                    raise Zero_error
+            # substract 1 because indexes are displayed as starting at 1
+            res = [int(i) - 1 for i in indexes]
+        except ValueError:
+            print("Enter a number please")
+            # if the exception is raised, we call back the method
+            return self._get_player_input()
+        except Zero_error:
+            print(Zero_error())
+            return self._get_player_input()
+        else:
+            return res
 
     def play(self):
         """Play the game turn by turn until victory or defeat
@@ -227,5 +247,64 @@ class Solitaire:
             self.turn()
 
 
+class AutoPlaySolitaire(Solitaire):
+    """Solitaire's daughter class which inherits its methods and adds the auto complete part.
+    1. Partir de la main actuelle et de la pile actuelle
+    2. Tant que jeu = True :
+        2.1Chercher combinaison qui vaut target
+        2.2Appliquer la combinaison
+    """
+    def turn(self):
+        """Manage a single turn of the game
+
+        The following steps are managed:
+        1. display the player's hand to stdout
+        2. ask the player to choose the dominos to discard
+        3. ensures the chosen dominos sum to `target`
+        4. if true discard them and refill the hand from the pile, if not do
+        nothing
+
+        """
+        # print the dominos in the hand to screen
+        self._display_hand()
+
+        if self._exists_legal_move():
+            indexes = self.legal_move()
+            for i in sorted(indexes, reverse=True):
+                self.hand.pop(i)
+            # fill the hand with dominos in the pile
+            while len(self.hand) != 7 and self.pile:
+                self.hand.append(self.pile.pop())
+
+    def play(self):
+        """Exactly the same Play as in Interactive Solitaire
+
+        """
+        while True:
+            if self.is_game_won():
+                print('You win ')
+                return True
+
+            if self.is_game_lost():
+                self._display_hand()
+                print('No more legal move, you loose ')
+                return False
+
+            self.turn()
+
+    def legal_move(self):
+        """Returns the combination if some combination in the hand sums to the target"""
+        # get an iterator over all the dominos combinations in the hand
+        if self._exists_legal_move():
+            combinations = itertools.chain.from_iterable(
+                itertools.combinations(self.hand, r)
+                for r in range(len(self.hand) + 1))
+
+            # a legal move exists if one combination sum to the target score
+            for combination in combinations:
+                if sum(d.score for d in combination) == self.target:
+                    return int(combination)
+
+
 if __name__ == '__main__':
-    Solitaire().play()
+    AutoPlaySolitaire().play()
