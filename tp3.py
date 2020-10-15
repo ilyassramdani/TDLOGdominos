@@ -3,6 +3,21 @@ import itertools
 import random
 
 
+class InvalidIndexError(Exception):
+    """Represent an error on the indexes from the input of the user"""
+    def __init__(self, n):
+        super().__init__()
+        self._value = n
+
+    @property
+    def value(self):
+        """Value of the error"""
+        return self._value
+
+    def __str__(self):
+        return f"Invalid index: '{self._value}'"
+
+
 class Domino:
     """Represent a domino with left and right integer values in [0, 6]"""
     # the pip used to render a domino on screen
@@ -61,24 +76,8 @@ class Domino:
         return not self == other
 
 
-class InvalidIndexError(Exception):
-    def __init__(self,n):
-        super().__init__()
-        self._value = n
-    @property
-    def value(self):
-        return self._value
-    def __str__(self):
-        return f"Invalid index '{self._value}'"
-
-
-
-
-
 class Solitaire:
     """Manage a domino's solitaire game
-
-    Launch a new interactive game with the play() method.
 
     Parameters
     ----------
@@ -133,30 +132,6 @@ class Solitaire:
             self._display_domino(index + 1, domino)
             print()
 
-    def check_indexes(self, indexes):
-        total = 0
-        for i in indexes:
-            if (0 <= i < len(self.hand)):
-                total += self.hand[i].score
-            else :
-                raise InvalidIndexError("Index must be between 1 and the size of the hand")
-
-        if total != self.target:
-            raise InvalidIndexError(f"invalid total ({total} but expected {self.target})")
-
-    def _get_player_input(self):
-        """Returns the indexes of dominos to discard entered by the player"""
-        indexes = input(f"(pile size: {len(self.pile)}), indexes to pull out?")
-
-        # substract 1 because indexes are displayed as starting at 1
-        try:
-            indexes = [int(i) - 1 for i in indexes]
-            self.check_indexes(indexes)
-        except ValueError :
-            raise InvalidIndexError("Index must be integer")
-        else:
-            return indexes
-
     @property
     def hand(self):
         """The hand of 7 (maximum) dominos to play with"""
@@ -179,6 +154,44 @@ class Solitaire:
     def is_game_lost(self):
         """Returns True if and only of the game is lost"""
         return not self._exists_legal_move()
+
+
+class InteractiveSolitaire(Solitaire):
+    """Solitaire's daughter class
+
+    Launch a new interactive game with the play() method.
+
+    """
+
+    def __init__(self, target=12):
+        super().__init__()
+
+    def _check_indexes(self, indexes):
+        """Raise InvalidIndexError if the indexes are not valid"""
+        total = 0
+        for i in indexes:
+            if 0 <= i < len(self.hand):
+                total += self.hand[i].score
+            else:
+                raise InvalidIndexError(
+                    "Index must be between 1 and the size of the hand")
+
+        if total != self.target:
+            raise InvalidIndexError(
+                f"invalid total ({total} but expected {self.target})")
+
+    def _get_player_input(self):
+        """Returns the indexes of dominos to discard entered by the player"""
+        indexes = input(f"(pile size: {len(self.pile)}), indexes to pull out?")
+
+        # substract 1 because indexes are displayed as starting at 1
+        try:
+            indexes = [int(i) - 1 for i in indexes]
+            self._check_indexes(indexes)
+        except ValueError:
+            raise InvalidIndexError("Index must be integer") from ValueError
+        else:
+            return indexes
 
     def turn(self):
         """Manage a single turn of the game
@@ -226,6 +239,24 @@ class Solitaire:
 
             self.turn()
 
+class AutoPlaySolitaire(Solitaire):
+    """Solitaire's daughter class
+
+    Launch a new game and search a solution with the play() method.
+
+    """
+
+    def __init__(self, target=12):
+        super().__init__()
+
+    def play(self):
+        """Play the game automatically
+
+        Returns True on victory, False on defeat.
+
+        """
+        #TODO
+        return False
 
 if __name__ == '__main__':
-    Solitaire().play()
+    InteractiveSolitaire().play()
